@@ -4,6 +4,7 @@
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen.svg)](https://nodejs.org)
 [![Zero Dependencies](https://img.shields.io/badge/dependencies-0-success.svg)](#)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178C6.svg)](./types/index.d.ts)
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-ffdd00?style=flat&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/rsahan)
 
 A lightweight, zero-dependency npm package providing official **Sri Lanka Public, Bank, and Mercantile Holidays** (including **Full Moon Poya Days**) for **2026** and **2027**, powered by clean JSON datasets for effortless future updates.
 
@@ -22,6 +23,7 @@ A lightweight, zero-dependency npm package providing official **Sri Lanka Public
   - [2026 Sri Lanka Holidays](#2026-sri-lanka-holidays)
   - [2027 Sri Lanka Holidays](#2027-sri-lanka-holidays)
 - [Contributing](#-contributing)
+- [Support & Donate](#-support--donate)
 - [License](#-license)
 
 ---
@@ -320,6 +322,16 @@ Contributions, issues, and feature requests (such as adding future gazetted holi
 2. Add or update the JSON dataset in `data/`
 3. Run tests via `npm test`
 4. Open a Pull Request
+
+---
+
+## ☕ Support & Donate
+
+If you find this package helpful in your projects, consider supporting its maintenance and future updates:
+
+[![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20a%20Coffee-Support%20Creator-FFDD00?style=for-the-badge&logo=buy-me-a-coffee&logoColor=black)](https://buymeacoffee.com/rsahan)
+
+👉 **[https://buymeacoffee.com/rsahan](https://buymeacoffee.com/rsahan)**
 
 ---
 
