@@ -90,7 +90,7 @@ function normalizeHolidayType(type) {
  * @returns {object}
  */
 function normalizeHolidayRecord(raw) {
-  if (!raw || typeof raw !== 'object') {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
     throw new Error('Holiday entry must be an object.');
   }
 
@@ -106,7 +106,20 @@ function normalizeHolidayRecord(raw) {
   }
 
   const uniqueTypes = Array.from(new Set(raw.types.map(normalizeHolidayType)));
-  const day = raw.day && typeof raw.day === 'string' ? raw.day.trim() : getDayOfWeek(date);
+  const expectedDay = getDayOfWeek(date);
+  if (raw.day !== undefined && raw.day !== null) {
+    if (typeof raw.day !== 'string' || raw.day.trim() !== expectedDay) {
+      throw new Error(
+        `Holiday "${raw.name}" (${date}) has invalid day "${raw.day}". Expected "${expectedDay}".`
+      );
+    }
+  }
+  const day = expectedDay;
+
+  if (raw.isPoya !== undefined && typeof raw.isPoya !== 'boolean') {
+    throw new Error(`Holiday "${raw.name}" (${date}) "isPoya" property must be a boolean when provided.`);
+  }
+
   const isPoya =
     typeof raw.isPoya === 'boolean' ? raw.isPoya : /\bpoya\b/i.test(raw.name);
 

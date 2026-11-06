@@ -36,18 +36,21 @@ function addHolidaysForYear(year, holidaysArray) {
     throw new Error(`Holidays data for year ${numericYear} must be an array.`);
   }
 
-  const normalizedList = holidaysArray
-    .map((item) => {
-      const record = normalizeHolidayRecord(item);
-      const recordYear = Number(record.date.slice(0, 4));
-      if (recordYear !== numericYear) {
-        throw new Error(
-          `Holiday "${record.name}" has date "${record.date}" which does not match year ${numericYear}.`
-        );
-      }
-      return record;
-    })
-    .sort((a, b) => a.date.localeCompare(b.date));
+  const dedupMap = new Map();
+  for (const item of holidaysArray) {
+    const record = normalizeHolidayRecord(item);
+    const recordYear = Number(record.date.slice(0, 4));
+    if (recordYear !== numericYear) {
+      throw new Error(
+        `Holiday "${record.name}" has date "${record.date}" which does not match year ${numericYear}.`
+      );
+    }
+    dedupMap.set(`${record.date}\0${record.name}`, record);
+  }
+
+  const normalizedList = Array.from(dedupMap.values()).sort((a, b) =>
+    a.date.localeCompare(b.date)
+  );
 
   holidaysStore.set(numericYear, normalizedList);
   return normalizedList.map(cloneHoliday);
@@ -65,6 +68,11 @@ function loadHolidaysFromJson(jsonInput) {
     for (const item of jsonInput) {
       const record = normalizeHolidayRecord(item);
       const year = Number(record.date.slice(0, 4));
+      if (!Number.isInteger(year) || year < 1900 || year > 3000) {
+        throw new Error(
+          `Invalid year "${year}" in holiday date "${record.date}". Expected a 4-digit year between 1900 and 3000.`
+        );
+      }
       if (!grouped.has(year)) {
         grouped.set(year, []);
       }
@@ -74,10 +82,10 @@ function loadHolidaysFromJson(jsonInput) {
       const existing = holidaysStore.get(year) || [];
       const mergedMap = new Map();
       for (const h of existing) {
-        mergedMap.set(`${h.date}::${h.name}`, h);
+        mergedMap.set(`${h.date}\0${h.name}`, h);
       }
       for (const h of records) {
-        mergedMap.set(`${h.date}::${h.name}`, h);
+        mergedMap.set(`${h.date}\0${h.name}`, h);
       }
       const merged = Array.from(mergedMap.values()).sort((a, b) =>
         a.date.localeCompare(b.date)
