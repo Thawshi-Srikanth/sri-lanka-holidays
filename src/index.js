@@ -89,6 +89,9 @@ function loadHolidaysFromJson(jsonInput) {
 
   if (jsonInput && typeof jsonInput === 'object') {
     for (const [yearKey, list] of Object.entries(jsonInput)) {
+      if (yearKey === '__proto__' || yearKey === 'constructor' || yearKey === 'prototype') {
+        continue;
+      }
       addHolidaysForYear(Number(yearKey), list);
     }
     return;
