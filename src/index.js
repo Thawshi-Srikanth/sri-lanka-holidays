@@ -130,29 +130,37 @@ function getSupportedYears() {
  * @returns {Array<object>}
  */
 function filterHolidaysList(list, options = {}) {
+  const opts = options && typeof options === 'object' && !Array.isArray(options) ? options : {};
   let result = list;
 
-  if (options.year !== undefined && options.year !== null) {
-    const yearStr = String(options.year);
+  if (opts.year !== undefined && opts.year !== null) {
+    const numericYear = Number(opts.year);
+    if (!Number.isInteger(numericYear) || numericYear < 1000 || numericYear > 9999) {
+      throw new Error(`Invalid year "${opts.year}". Expected a 4-digit year between 1000 and 9999.`);
+    }
+    const yearStr = String(numericYear);
     result = result.filter((h) => h.date.startsWith(`${yearStr}-`));
   }
 
-  if (options.month !== undefined && options.month !== null) {
-    const monthNum = Number(options.month);
+  if (opts.month !== undefined && opts.month !== null) {
+    const monthNum = Number(opts.month);
     if (!Number.isInteger(monthNum) || monthNum < 1 || monthNum > 12) {
-      throw new Error(`Invalid month "${options.month}". Expected an integer between 1 and 12.`);
+      throw new Error(`Invalid month "${opts.month}". Expected an integer between 1 and 12.`);
     }
     const monthStr = String(monthNum).padStart(2, '0');
     result = result.filter((h) => h.date.slice(5, 7) === monthStr);
   }
 
-  if (options.type !== undefined && options.type !== null) {
-    const targetType = normalizeHolidayType(options.type);
+  if (opts.type !== undefined && opts.type !== null) {
+    const targetType = normalizeHolidayType(opts.type);
     result = result.filter((h) => h.types.includes(targetType));
   }
 
-  if (typeof options.isPoya === 'boolean') {
-    result = result.filter((h) => h.isPoya === options.isPoya);
+  if (opts.isPoya !== undefined && opts.isPoya !== null) {
+    if (typeof opts.isPoya !== 'boolean') {
+      throw new Error(`Invalid isPoya option "${opts.isPoya}". Expected a boolean.`);
+    }
+    result = result.filter((h) => h.isPoya === opts.isPoya);
   }
 
   return result.map(cloneHoliday);
@@ -180,10 +188,19 @@ function getHolidays(yearOrOptions) {
     return getHolidaysByYear(yearOrOptions);
   }
 
-  if (typeof yearOrOptions === 'object') {
+  if (
+    typeof yearOrOptions === 'object' &&
+    !Array.isArray(yearOrOptions) &&
+    !(yearOrOptions instanceof Date)
+  ) {
     let baseList = [];
     if (yearOrOptions.year !== undefined && yearOrOptions.year !== null) {
       const numericYear = Number(yearOrOptions.year);
+      if (!Number.isInteger(numericYear) || numericYear < 1000 || numericYear > 9999) {
+        throw new Error(
+          `Invalid year "${yearOrOptions.year}". Expected a 4-digit year between 1000 and 9999.`
+        );
+      }
       baseList = holidaysStore.get(numericYear) || [];
     } else {
       for (const year of getSupportedYears()) {
@@ -193,7 +210,9 @@ function getHolidays(yearOrOptions) {
     return filterHolidaysList(baseList, yearOrOptions);
   }
 
-  throw new Error('Invalid argument passed to getHolidays().');
+  throw new Error(
+    'Invalid argument passed to getHolidays(). Expected year number/string or options object.'
+  );
 }
 
 /**
@@ -204,11 +223,12 @@ function getHolidays(yearOrOptions) {
  */
 function getHolidaysByYear(year, options = {}) {
   const numericYear = Number(year);
-  if (!Number.isInteger(numericYear)) {
-    throw new Error(`Invalid year "${year}".`);
+  if (!Number.isInteger(numericYear) || numericYear < 1000 || numericYear > 9999) {
+    throw new Error(`Invalid year "${year}". Expected a 4-digit year.`);
   }
+  const opts = options && typeof options === 'object' && !Array.isArray(options) ? options : {};
   const yearList = holidaysStore.get(numericYear) || [];
-  return filterHolidaysList(yearList, options);
+  return filterHolidaysList(yearList, opts);
 }
 
 /**
@@ -362,19 +382,34 @@ function isPoyaDay(dateInput) {
 /**
  * Returns upcoming holidays on or after `fromDate` (defaults to today).
  *
- * @param {string | Date} [fromDate]
+ * @param {string | Date | object} [fromDate]
  * @param {{ limit?: number, type?: string, isPoya?: boolean }} [options]
  * @returns {Array<object>}
  */
 function getUpcomingHolidays(fromDate = new Date(), options = {}) {
-  const startStr = toDateString(fromDate);
+  let startDate = fromDate;
+  let opts = options;
+  if (fromDate && typeof fromDate === 'object' && !(fromDate instanceof Date)) {
+    opts = fromDate;
+    startDate = new Date();
+  }
+  if (!opts || typeof opts !== 'object') {
+    opts = {};
+  }
+  if (opts.limit !== undefined && opts.limit !== null) {
+    if (!Number.isInteger(opts.limit) || opts.limit < 0) {
+      throw new Error(`Invalid limit "${opts.limit}". Expected a non-negative integer.`);
+    }
+  }
+
+  const startStr = toDateString(startDate);
   const all = getHolidays({
-    type: options.type,
-    isPoya: options.isPoya
+    type: opts.type,
+    isPoya: opts.isPoya
   }).filter((h) => h.date >= startStr);
 
-  if (typeof options.limit === 'number' && options.limit > 0) {
-    return all.slice(0, options.limit);
+  if (typeof opts.limit === 'number') {
+    return all.slice(0, opts.limit);
   }
   return all;
 }

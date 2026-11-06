@@ -14,7 +14,13 @@ function toDateString(dateInput) {
     if (Number.isNaN(dateInput.getTime())) {
       throw new Error('Invalid Date object provided.');
     }
-    const year = dateInput.getFullYear();
+    const fullYear = dateInput.getFullYear();
+    if (fullYear < 1000 || fullYear > 9999) {
+      throw new Error(
+        `Invalid Date object: year ${fullYear} is out of range. Expected a 4-digit year between 1000 and 9999.`
+      );
+    }
+    const year = String(fullYear).padStart(4, '0');
     const month = String(dateInput.getMonth() + 1).padStart(2, '0');
     const day = String(dateInput.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
@@ -31,7 +37,13 @@ function toDateString(dateInput) {
     const year = Number(match[1]);
     const month = Number(match[2]);
     const day = Number(match[3]);
+    if (year < 1000 || year > 9999) {
+      throw new Error(`Invalid year "${year}". Expected a 4-digit year between 1000 and 9999.`);
+    }
     const parsed = new Date(Date.UTC(year, month - 1, day));
+    if (year < 100) {
+      parsed.setUTCFullYear(year);
+    }
     if (
       parsed.getUTCFullYear() !== year ||
       parsed.getUTCMonth() + 1 !== month ||
@@ -46,13 +58,17 @@ function toDateString(dateInput) {
 }
 
 /**
- * Gets the day of the week name (e.g., "Monday") for a "YYYY-MM-DD" date string.
- * @param {string} dateStr
+ * Gets the day of the week name (e.g., "Monday") for a "YYYY-MM-DD" date string or Date instance.
+ * @param {string | Date} dateInput
  * @returns {string}
  */
-function getDayOfWeek(dateStr) {
+function getDayOfWeek(dateInput) {
+  const dateStr = toDateString(dateInput);
   const [year, month, day] = dateStr.split('-').map(Number);
   const utcDate = new Date(Date.UTC(year, month - 1, day));
+  if (year < 100) {
+    utcDate.setUTCFullYear(year);
+  }
   return DAYS_OF_WEEK[utcDate.getUTCDay()];
 }
 
