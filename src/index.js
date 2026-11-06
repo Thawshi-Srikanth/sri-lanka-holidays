@@ -270,34 +270,46 @@ function getPoyaDays(year) {
 }
 
 /**
+ * Internal helper to retrieve all holidays on a specific date.
+ * @param {string | Date} dateInput
+ * @returns {Array<object>}
+ */
+function getHolidaysForDateInternal(dateInput) {
+  const dateStr = toDateString(dateInput);
+  const year = Number(dateStr.slice(0, 4));
+  const yearList = holidaysStore.get(year) || [];
+  return yearList.filter((h) => h.date === dateStr);
+}
+
+/**
  * Gets a holiday object for a specific date ('YYYY-MM-DD' or Date instance), or null if none.
+ * If multiple holidays fall on the date, returns the first holiday.
+ *
  * @param {string | Date} dateInput
  * @returns {object | null}
  */
 function getHolidayByDate(dateInput) {
-  const dateStr = toDateString(dateInput);
-  const year = Number(dateStr.slice(0, 4));
-  const yearList = holidaysStore.get(year) || [];
-  const found = yearList.find((h) => h.date === dateStr);
-  return found ? cloneHoliday(found) : null;
+  const matches = getHolidaysForDateInternal(dateInput);
+  return matches.length > 0 ? cloneHoliday(matches[0]) : null;
 }
 
 /**
  * Checks if a date ('YYYY-MM-DD' or Date instance) is a holiday.
  * Optionally checks if it is a holiday of a specific type ('Public', 'Bank', 'Mercantile').
+ * Accurately handles multiple holidays coinciding on the same date.
  *
  * @param {string | Date} dateInput
  * @param {'Public' | 'Bank' | 'Mercantile' | string} [type]
  * @returns {boolean}
  */
 function isHoliday(dateInput, type) {
-  const holiday = getHolidayByDate(dateInput);
-  if (!holiday) {
+  const matches = getHolidaysForDateInternal(dateInput);
+  if (matches.length === 0) {
     return false;
   }
   if (type !== undefined && type !== null) {
     const normalizedType = normalizeHolidayType(type);
-    return holiday.types.includes(normalizedType);
+    return matches.some((h) => h.types.includes(normalizedType));
   }
   return true;
 }
@@ -335,8 +347,8 @@ function isMercantileHoliday(dateInput) {
  * @returns {boolean}
  */
 function isPoyaDay(dateInput) {
-  const holiday = getHolidayByDate(dateInput);
-  return Boolean(holiday && holiday.isPoya);
+  const matches = getHolidaysForDateInternal(dateInput);
+  return matches.some((h) => Boolean(h.isPoya));
 }
 
 /**
